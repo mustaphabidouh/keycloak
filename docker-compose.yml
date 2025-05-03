@@ -5,15 +5,14 @@ services:
     image: traefik:v2.10
     container_name: traefik
     command:
+      - "--log.level=DEBUG"
       - "--api.insecure=true"
-      - "--providers.docker=true"
       - "--entrypoints.web.address=:80"
-      # Optional HTTPS setup
-      # - "--entrypoints.websecure.address=:443"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
     ports:
       - "80:80"
       - "8080:8080"  # Traefik dashboard
-      # - "443:443"  # Enable if using HTTPS
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     networks:
@@ -35,20 +34,18 @@ services:
     image: dpage/pgadmin4
     container_name: pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: m.bidouh@gmail.com
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
       PGADMIN_DEFAULT_PASSWORD: admin
     depends_on:
       - postgresql
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.localhost`)"
       - "traefik.http.routers.pgadmin.entrypoints=web"
       - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy"
     networks:
       - proxy
-      - keycloak
 
   keycloak:
     image: quay.io/keycloak/keycloak:22.0.3
@@ -57,11 +54,6 @@ services:
     depends_on:
       - postgresql
     environment:
-      KC_PROXY_ADDRESS_FORWARDING: "true"
-      KC_HOSTNAME_STRICT: "false"
-      KC_HOSTNAME: keycloak.localhost
-      KC_PROXY: edge
-      KC_HTTP_ENABLED: "true"
       KC_DB: postgres
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: SUPERsecret
@@ -70,21 +62,25 @@ services:
       KC_DB_URL_DATABASE: keycloak
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
+      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY_ADDRESS_FORWARDING: "true"
+      KC_HOSTNAME: keycloak.localhost
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.keycloak.rule=Host(`keycloak.localhost`)"
       - "traefik.http.routers.keycloak.entrypoints=web"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+      - "traefik.docker.network=proxy"
     networks:
       - proxy
       - keycloak
 
 volumes:
   postgres_data:
-  pgadmin_data:
 
 networks:
   proxy:
-    name: proxy
+    external: true
   keycloak:
-    name: keycloak
