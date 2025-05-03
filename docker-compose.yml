@@ -1,0 +1,90 @@
+﻿version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      # Optional HTTPS setup
+      # - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "8080:8080"  # Traefik dashboard
+      # - "443:443"  # Enable if using HTTPS
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - proxy
+
+  postgresql:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_DB: keycloak
+      POSTGRES_PASSWORD: SUPERsecret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - keycloak
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: m.bidouh@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    depends_on:
+      - postgresql
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.localhost`)"
+      - "traefik.http.routers.pgadmin.entrypoints=web"
+      - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
+    networks:
+      - proxy
+      - keycloak
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:22.0.3
+    container_name: keycloak
+    command: start-dev
+    depends_on:
+      - postgresql
+    environment:
+      KC_PROXY_ADDRESS_FORWARDING: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME: keycloak.localhost
+      KC_PROXY: edge
+      KC_HTTP_ENABLED: "true"
+      KC_DB: postgres
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: SUPERsecret
+      KC_DB_URL_HOST: postgresql
+      KC_DB_URL_PORT: 5432
+      KC_DB_URL_DATABASE: keycloak
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak.rule=Host(`keycloak.localhost`)"
+      - "traefik.http.routers.keycloak.entrypoints=web"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+    networks:
+      - proxy
+      - keycloak
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+
+networks:
+  proxy:
+    name: proxy
+  keycloak:
+    name: keycloak
