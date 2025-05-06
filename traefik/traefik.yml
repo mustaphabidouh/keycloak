@@ -23,6 +23,6 @@ certificatesResolvers:
       email: m.bidouh@gmail.com
       storage: /letsencrypt/acme.json
       httpChallenge:
-        entryPoint: http
+        entryPoint: web
 
 
