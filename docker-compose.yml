@@ -5,20 +5,14 @@ services:
     image: traefik:v2.10
     container_name: traefik
     command:
-      - "--log.level=DEBUG"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
-      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.myresolver.acme.email=m.bidouh@gmail.com"
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
+      - "--configFile=/etc/traefik/traefik.yml"     
     ports:
       - "80:80"        # HTTP
       - "8080:8080"    # Traefik Dashboard
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./traefik/traefik.yml:/etc/traefik/traefik.yml"
+      - "./traefik/letsencrypt/acme.json:/letsencrypt/acme.json"
     networks:
       - proxy
 
@@ -49,7 +43,7 @@ services:
       - pgadmin_data:/var/lib/pgadmin
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.localhost`)"
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.k2bm-apps.com`)"
       - "traefik.http.routers.pgadmin.entrypoints=web"
       - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
       - "traefik.docker.network=proxy"
@@ -66,7 +60,7 @@ services:
     environment:
       KC_PROXY_ADDRESS_FORWARDING: "true"
       KC_HOSTNAME_STRICT: "false"
-      KC_HOSTNAME: keycloak.localhost
+      KC_HOSTNAME: keycloak.k2bm-apps.com
       KC_PROXY: edge
       KC_HTTP_ENABLED: "true"
       KC_DB: postgres
@@ -79,7 +73,7 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.keycloak.rule=Host(`keycloak.localhost`)"
+      - "traefik.http.routers.keycloak.rule=Host(`keycloak.k2bm-apps.com`)"
       - "traefik.http.routers.keycloak.entrypoints=web"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
       - "traefik.docker.network=proxy"

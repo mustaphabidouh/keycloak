@@ -1,7 +1,7 @@
 entryPoints:
-  http:
+  web:
     address: ":80"
-  https:
+  websecure:
     address: ":443"
 
 providers:
@@ -24,6 +24,8 @@ certificatesResolvers:
   default:
     acme:
       email: m.bidouh@gmail.com
-      storage: /etc/traefik/acme.json
+      storage: /letsencrypt/acme.json
       httpChallenge:
         entryPoint: http
+
+
