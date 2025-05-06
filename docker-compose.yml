@@ -5,7 +5,9 @@ services:
     image: traefik:v2.10
     container_name: traefik
     command:
+      - "--log.level=DEBUG"    
       - "--configFile=/etc/traefik/traefik.yml"     
+      - "--log.level=DEBUG"
     ports:
       - "80:80"        # HTTP
       - "8080:8080"    # Traefik Dashboard
