@@ -11,7 +11,18 @@
     <DockerComposeProjectName>keycloak-auth</DockerComposeProjectName>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="docker-compose.override.yml">
+      <DependentUpon>docker-compose.yml</DependentUpon>
+    </None>
+    <None Include="docker-compose.prod.yml">
+      <DependentUpon>docker-compose.yml</DependentUpon>
+    </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
+    <None Include="traefik\acme.json" />
+    <None Include="traefik\certs\cert.pem" />
+    <None Include="traefik\certs\key.pem" />
+    <None Include="traefik\dynamic\tls.yml" />
+    <None Include="traefik\traefik.yml" />
   </ItemGroup>
 </Project>
